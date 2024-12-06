@@ -62,30 +62,30 @@ def list_all_credentials(db_name: str):
     database = load_database(db_name)
     cursor = database.cursor()
 
-    cursor.execute(f'SELECT url,username,password FROM credentials ')
+    cursor.execute(f'SELECT id,url,username,password FROM credentials ')
 
     credentials = cursor.fetchall()
 
     for item in credentials:
-        print(f"URL: {item[0]}\nUsername: {item[1]}\nPassword: {item[2]}\n{"-" * 30}")
+        print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
 
 def search_through_credentials(db_name:str,query:str):
     database = load_database(db_name)
     cursor = database.cursor()
 
-    cursor.execute(f'SELECT url,username,password FROM credentials WHERE credentials.url LIKE "%{query}%" OR credentials.username LIKE "%{query}%" OR credentials.password LIKE "%{query}%"')
+    cursor.execute(f'SELECT id,url,username,password FROM credentials WHERE credentials.url LIKE "%{query}%" OR credentials.username LIKE "%{query}%" OR credentials.password LIKE "%{query}%"')
 
     credentials = cursor.fetchall()
 
     for item in credentials:
-        print(f"URL: {item[0]}\nUsername: {item[1]}\nPassword: {item[2]}\n{"-" * 30}")
+        print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
 
 
 def check_if_credentials_exist(db_name: str, url: str, username: str, password: str):
     database = load_database(db_name)
     cursor = database.cursor()
 
-    if cursor.execute(f'SELECT url,username,password '
+    if cursor.execute(f'SELECT id,url,username,password '
                       f'FROM credentials '
                       f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"'):
         existing_data = cursor.fetchall()
@@ -93,8 +93,9 @@ def check_if_credentials_exist(db_name: str, url: str, username: str, password: 
             return existing_data
         return None
 
-def update_credentials(url:str,username:str,password:str,database_object,new_username:str,new_password:str):
-    cursor = database_object.cursor()
+def update_credentials_by_name_and_password(db_name:str,url:str,username:str,password:str,new_username:str,new_password:str):
+    database = load_database(db_name)
+    cursor = database.cursor()
     current_date = datetime.datetime.now()
     if new_password and new_username:
         cursor.execute(
@@ -106,26 +107,42 @@ def update_credentials(url:str,username:str,password:str,database_object,new_use
     elif new_username:
         cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = "{current_date}" '
                        f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"')
-    database_object.commit()
+    database.commit()
+
+def update_credentials_by_id(db_name:str,id:int,new_username:str,new_password:str):
+    database = load_database(db_name)
+    cursor = database.cursor()
+    current_date = datetime.datetime.now()
+    if new_password and new_username:
+        cursor.execute(
+            f'UPDATE credentials SET username = "{new_username}", password = "{new_password}", date_updated = "{current_date}" '
+            f'WHERE credentials.id = {id}')
+    elif new_password:
+        cursor.execute(f'UPDATE credentials SET password = "{new_password}",date_updated = "{current_date}" '
+                       f'WHERE credentials.id = {id}')
+    elif new_username:
+        cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = "{current_date}" '
+                       f'WHERE credentials.id = {id}')
+    database.commit()
 
 
 def add_credentials(db_name:str,url:str,username:str,password:str):
     database = load_database(db_name)
     cursor = database.cursor()
-    current_date = datetime.datetime.now()
 
     if_exist = check_if_credentials_exist(db_name,url,username,password)
     if if_exist:
         for item in if_exist:
-            print(f"URL: {item[0]}\nUsername: {item[1]}\nPassword: {item[2]}\n{"-" * 30}")
+            print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
         option = input("Do you want to update the password or username? (y/n)")
         if option.lower() == "y":
             new_username = input("Enter new username (leave blank for no changes): ")
             new_password = input("Enter new password (leave blank for no changes): ")
-            update_credentials(url,username,password,database,new_username,new_password)
+            update_credentials_by_name_and_password(db_name,url,username,password,new_username,new_password)
     else:
-        cursor.execute(f'INSERT INTO credentials VALUES ("{url}","{username}","{password}","{current_date}","{current_date}")')
+        current_date = datetime.datetime.now()
+        cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
     database.commit()
 
 
-#add_credentials("dada","kokot.com","hajzel","heslo123")
+
