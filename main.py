@@ -59,21 +59,26 @@ class DPManager:
             file.write(database)
             file.close()
 
-        database = sqlite3.connect(f"temp_db_file_{self.db_name}.temp")
-        self.temp_db = database
-
+        database_d = sqlite3.connect(f"temp_db_file_{self.db_name}.temp")
+        database_m = sqlite3.connect(":memory:")
+        database_d.backup(database_m)
+        self.temp_db = database_m
+        database_d.close()
+        self.delete_temp_file()
 
     def delete_temp_file(self):
         os.remove(f"temp_db_file_{self.db_name}.temp")
 
     def write_to_database(self):
+        temp_new = sqlite3.connect(f"temp_db_file_{self.db_name}.temp")
+        self.temp_db.backup(temp_new)
+        temp_new.close()
         with open(f"{self.db_name}.db", "wb") as file:
             with open(f"temp_db_file_{self.db_name}.temp","rb") as file2:
                 file.write(self.encrypt(file2.read(),self.db_encryption_key))
                 file2.close()
         self.temp_db.close()
         self.delete_temp_file()
-
 
     def encrypt_database(self,key:bytes):
         with open(f"{self.db_name}.db","rb") as file:
@@ -86,12 +91,13 @@ class DPManager:
         database = self.temp_db
         cursor = database.cursor()
 
-        cursor.execute(f'SELECT id,url,username,password FROM credentials ')
+        cursor.execute(f'SELECT id,url,username,password FROM credentials')
 
         credentials = cursor.fetchall()
 
         for item in credentials:
             print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
+        return credentials
 
 
     def search_through_credentials(self,query:str):
@@ -175,5 +181,6 @@ class DPManager:
 
         cursor.execute(f"DELETE FROM credentials WHERE credentials.id = {id}")
         database.commit()
+
 
 
