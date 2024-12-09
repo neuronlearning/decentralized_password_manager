@@ -177,10 +177,3 @@ class DPManager:
         database.commit()
 
 
-
-databa = DPManager("adada","test")
-
-databa.load_database()
-databa.search_through_credentials("17")
-databa.write_to_database()
-
