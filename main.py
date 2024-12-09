@@ -169,6 +169,13 @@ class DPManager:
             cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
         database.commit()
 
+    def remove_credentials_by_id(self,id:int):
+        database = self.temp_db
+        cursor = database.cursor()
+
+        cursor.execute(f"DELETE FROM credentials WHERE credentials.id = {id}")
+        database.commit()
+
 
 
 databa = DPManager("adada","test")
