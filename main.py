@@ -80,6 +80,7 @@ class DPManager:
         self.temp_db.close()
         self.delete_temp_file()
 
+
     def encrypt_database(self,key:bytes):
         with open(f"{self.db_name}.db","rb") as file:
             unencrypted = file.read()
@@ -95,8 +96,8 @@ class DPManager:
 
         credentials = cursor.fetchall()
 
-        for item in credentials:
-            print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
+         #for item in credentials:
+          #  print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
         return credentials
 
 
@@ -139,6 +140,7 @@ class DPManager:
             cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = "{current_date}" '
                            f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"')
         database.commit()
+        self.write_to_database() #thanks python for not allowing me to use wrapper for this
 
     def update_credentials_by_id(self,id:int,new_username:str,new_password:str):
         database = self.temp_db
@@ -155,7 +157,7 @@ class DPManager:
             cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = "{current_date}" '
                            f'WHERE credentials.id = {id}')
         database.commit()
-
+        self.write_to_database() #thanks python for not allowing me to use wrapper for this
 
     def add_credentials(self,url:str,username:str,password:str):
         database = self.temp_db
@@ -174,6 +176,7 @@ class DPManager:
             current_date = datetime.datetime.now()
             cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
         database.commit()
+        self.write_to_database() #thanks python for not allowing me to use wrapper for this
 
     def remove_credentials_by_id(self,id:int):
         database = self.temp_db
@@ -181,6 +184,9 @@ class DPManager:
 
         cursor.execute(f"DELETE FROM credentials WHERE credentials.id = {id}")
         database.commit()
-
-
-
+        self.write_to_database() #thanks python for not allowing me to use wrapper for this
+'''
+database = DPManager("default_user","test")
+database.load_database()
+print(database.list_all_credentials())
+'''
