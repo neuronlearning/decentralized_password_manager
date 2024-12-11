@@ -164,9 +164,10 @@ class DPManager:
         database = self.temp_db
         cursor = database.cursor()
         current_date = datetime.datetime.now()
-        cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
-        database.commit()
-        self.write_to_database() #thanks python for not allowing me to use wrapper for this
+        if url and username and password:
+            cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
+            database.commit()
+            self.write_to_database() #thanks python for not allowing me to use wrapper for this
 
     def remove_credentials_by_id(self,id:int):
         database = self.temp_db

@@ -35,7 +35,7 @@ class app:
                 try:
                     self.db_decryption_key = open(json_settings_["key_path"], "r").read()
                 except FileNotFoundError:
-                    json_settings_["key_path"] = self.password_input()
+                    json_settings_["key_path"] = os.path.basename(self.password_input())
 
                 self.database = DPManager(json_settings_["database_name"],self.db_decryption_key)
                 self.database.load_database()
@@ -46,7 +46,7 @@ class app:
                 raise FileNotFoundError
         except FileNotFoundError:
             messagebox.showwarning("Warning", "Database not found. New one was created.")
-            json_settings["key_path"] = self.password_input()
+            json_settings["key_path"] = os.path.basename(self.password_input())
             with open("dpm_settings.json", "w") as file:
                 json.dump(json_settings,file,indent=2)
 
