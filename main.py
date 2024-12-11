@@ -109,8 +109,9 @@ class DPManager:
 
         credentials = cursor.fetchall()
 
-        for item in credentials:
-            print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
+        #for item in credentials:
+         #   print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
+        return credentials
 
 
     def check_if_credentials_exist(self, url: str, username: str, password: str):
@@ -162,19 +163,8 @@ class DPManager:
     def add_credentials(self,url:str,username:str,password:str):
         database = self.temp_db
         cursor = database.cursor()
-
-        if_exist = self.check_if_credentials_exist(url,username,password)
-        if if_exist:
-            for item in if_exist:
-                print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
-            option = input("Do you want to update the password or username? (y/n)")
-            if option.lower() == "y":
-                new_username = input("Enter new username (leave blank for no changes): ")
-                new_password = input("Enter new password (leave blank for no changes): ")
-                self.update_credentials_by_name_and_password(url,username,password,new_username,new_password)
-        else:
-            current_date = datetime.datetime.now()
-            cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
+        current_date = datetime.datetime.now()
+        cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
         database.commit()
         self.write_to_database() #thanks python for not allowing me to use wrapper for this
 
@@ -188,5 +178,5 @@ class DPManager:
 '''
 database = DPManager("default_user","test")
 database.load_database()
-print(database.list_all_credentials())
+print(database.search_through_credentials("goo"))
 '''
