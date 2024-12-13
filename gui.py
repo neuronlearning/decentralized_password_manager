@@ -76,6 +76,23 @@ class app:
         button = tkinter.Button(root,text="OK",command=lambda: (self.refresh_listview("add",[url.get(),username.get(),password.get()]),root.destroy()))
         button.grid(row=4,columnspan=3,column=0)
 
+    def change_credentials_window(self):
+        root = tkinter.Toplevel(self.root)
+        root.geometry("300x100")
+        root.resizable(False, False)
+        root.title("Update credentials")
+
+        username = tkinter.Entry(root, font=30)
+        tkinter.Label(root, text="Username: ", font=30).grid(row=2, column=0)
+        username.grid(row=2, column=1)
+
+        password = tkinter.Entry(root, font=30, show="*")
+        tkinter.Label(root, font=30, text="Password: ").grid(row=3, column=0)
+        password.grid(row=3, column=1)
+
+        button = tkinter.Button(root, text="OK", command=lambda: (self.refresh_listview("change", [self.tree.item(self.tree.focus())["values"][0],username.get(), password.get()]), root.destroy()))
+        button.grid(row=4, columnspan=3, column=0)
+
     def refresh_listview(self,function_db,additional = []):
         self.database.load_database()
         if function_db == "refresh":
@@ -88,9 +105,14 @@ class app:
                 self.database.load_database()
                 credentials = self.database.list_all_credentials()
             except IndexError:
+                messagebox.showwarning("Warning", "You must first select the credential before removing it.")
                 credentials = self.database.list_all_credentials()
         elif function_db == "add":
             self.database.add_credentials(additional[0],additional[1],additional[2])
+            self.database.load_database()
+            credentials = self.database.list_all_credentials()
+        elif function_db == "change":
+            self.database.update_credentials_by_id(additional[0],additional[1],additional[2])
             self.database.load_database()
             credentials = self.database.list_all_credentials()
 
@@ -138,6 +160,10 @@ class app:
         refresh_button.pack(side=tkinter.LEFT,expand=True)
         delete_button = tkinter.Button(buttons_frame, text="Delete", command=lambda: self.refresh_listview("delete",self.tree.item(self.tree.focus())["values"]))
         delete_button.pack(side=tkinter.LEFT, expand=True)
+        change_button = tkinter.Button(buttons_frame, text="Change", command=self.change_credentials_window)
+        change_button.pack(side=tkinter.LEFT, expand=True)
+
+
 
 gui = app()
 
