@@ -22,6 +22,7 @@ class app:
         self.db_decryption_key = open(file,"r").read()
         return file
 
+
     def settings(self):
         json_settings = { # more are on the way tm
             "database": "default_user.db",
@@ -72,21 +73,34 @@ class app:
         tkinter.Label(root,font=30, text="Password: ").grid(row=3, column=0)
         password.grid(row=3, column=1)
 
-        button = tkinter.Button(root,text="OK",command=lambda: (self.database.add_credentials(url.get(),username.get(), password.get()),self.refresh_listview("refresh"),root.destroy()))
+        button = tkinter.Button(root,text="OK",command=lambda: (self.refresh_listview("add",[url.get(),username.get(),password.get()]),root.destroy()))
         button.grid(row=4,columnspan=3,column=0)
 
-    def refresh_listview(self,function_db,additional = ""):
+    def refresh_listview(self,function_db,additional = []):
         self.database.load_database()
         if function_db == "refresh":
             credentials = self.database.list_all_credentials()
         elif function_db == "search":
-            credentials = self.database.search_through_credentials(additional)
+            credentials = self.database.search_through_credentials(additional[0])
+        elif function_db == "delete":
+            try:
+                self.database.remove_credentials_by_id(additional[0])
+                self.database.load_database()
+                credentials = self.database.list_all_credentials()
+            except IndexError:
+                credentials = self.database.list_all_credentials()
+        elif function_db == "add":
+            self.database.add_credentials(additional[0],additional[1],additional[2])
+            self.database.load_database()
+            credentials = self.database.list_all_credentials()
 
         for item in self.tree.get_children():
             self.tree.delete(item)
 
         for credential in credentials:
             self.tree.insert('', tkinter.END, values=credential)
+
+
 
     def widgets(self):
         columns = ("id","url","username","password")
@@ -122,6 +136,8 @@ class app:
         add_button.pack(side=tkinter.LEFT,expand=True)
         refresh_button = tkinter.Button(buttons_frame, text="Refresh", command=lambda: self.refresh_listview("refresh"))
         refresh_button.pack(side=tkinter.LEFT,expand=True)
+        delete_button = tkinter.Button(buttons_frame, text="Delete", command=lambda: self.refresh_listview("delete",self.tree.item(self.tree.focus())["values"]))
+        delete_button.pack(side=tkinter.LEFT, expand=True)
 
 gui = app()
 
