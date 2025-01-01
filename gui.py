@@ -1,6 +1,6 @@
 import tkinter
 from tkinter import ttk, messagebox,filedialog
-from main import DPManager
+from dpmanager import DPManager
 import json
 import threading
 import os
@@ -8,52 +8,67 @@ import os
 class app:
 
     def __init__(self):
-        self.settings()
+
         self.root = tkinter.Tk()
+        self.settings()
         self.root.geometry("800x600")
         self.root.title("Password Manager")
         self.root.config(bg="#3e4142")
-        self.widgets()
         self.root.mainloop()
 
 
-    def password_input(self):
-        file = filedialog.askopenfilename(title="Choose your password text file")
-        self.db_decryption_key = open(file,"r").read()
-        return file
+    def password_input(self,exists):
+        #file = filedialog.askopenfilename(title="Choose your password text file")
+        #self.db_decryption_key = open(file,"r").read()
+        #return file
+        pass_w = tkinter.Toplevel(self.root)
+        pass_w.geometry("300x100")
+        pass_w.resizable(False, False)
+        pass_w.title("Enter password")
+        password_label = tkinter.Label(pass_w,text="Password:",font=30)
+        password_label.grid(row=0,column=0)
+        password_input = tkinter.Entry(pass_w,font=30,show="*")
+        password_input.grid(row=0,columnspan=2,column=1)
+        if exists:
+            ok_button = tkinter.Button(pass_w,text="Enter",font=20,command=lambda : (self.database.set_encryption_key(password=password_input.get()),
+                                                                                     self.database.load_database(),
+                                                                                     self.widgets()))
+            ok_button.grid(row=1,columnspan=2,column=1,pady=5)
+        else:
+            database_label = tkinter.Label(pass_w, text="Database name:", font=30)
+            database_label.grid(row=1, column=0)
+            database_input = tkinter.Entry(pass_w, font=30)
+            database_input.grid(row=1, columnspan=2, column=1)
+            ok_button = tkinter.Button(pass_w, text="Enter", font=20, command=lambda: (self.database.set_db_name(database_input.get()),
+            self.database.set_encryption_key(password=password_input.get()),
+            self.database.create_database(),
+            self.database.load_database(),
+            open("dpm_settings.json", "w").write(json.dumps({
+        "database": f"{database_input.get()}.db",
+        "database_name": f"{database_input.get()}"
+    })),
+            self.widgets()))
+            # this is literally the biggest clusterfuck i have ever written its so fucking terrible holy shit
+            ok_button.grid(row=2, columnspan=2, column=1, pady=5)
 
 
     def settings(self):
-        json_settings = { # more are on the way tm
+        json_settings = {  # more are on the way tm
             "database": "default_user.db",
-            "database_name": "default_user",
-            "key_path": "default_key_path"
+            "database_name": "default_user"
         }
         try:
-            with open("dpm_settings.json","r") as file:
-                json_settings_ = json.load(file)
-            if os.path.isfile(json_settings_["database"]):
-                try:
-                    self.db_decryption_key = open(json_settings_["key_path"], "r").read()
-                except FileNotFoundError:
-                    json_settings_["key_path"] = os.path.basename(self.password_input())
+            with open("dpm_settings.json", "r") as file:
+                setting = file.read()
+                setting = json.loads(setting)
+                self.database = DPManager(setting["database_name"])
+                self.password_input(exists=True)
 
-                self.database = DPManager(json_settings_["database_name"],self.db_decryption_key)
-                self.database.load_database()
-
-                with open("dpm_settings.json", "w") as file:
-                        json.dump(json_settings_,file)
-            else:
-                raise FileNotFoundError
         except FileNotFoundError:
-            messagebox.showwarning("Warning", "Database not found. New one was created.")
-            json_settings["key_path"] = os.path.basename(self.password_input())
-            with open("dpm_settings.json", "w") as file:
-                json.dump(json_settings,file,indent=2)
+            messagebox.showinfo("Warning", "The database file was not found. Creating new one.")
+            self.database = DPManager()
+            self.password_input(exists=False)
 
-            self.database = DPManager(json_settings["database_name"], self.db_decryption_key)
-            self.database.create_database()
-            self.database.load_database()
 
     def add_credentials_window(self):
         root = tkinter.Toplevel(self.root)
@@ -122,8 +137,6 @@ class app:
         for credential in credentials:
             self.tree.insert('', tkinter.END, values=credential)
 
-
-
     def widgets(self):
         columns = ("id","url","username","password")
 
@@ -162,6 +175,8 @@ class app:
         delete_button.pack(side=tkinter.LEFT, expand=True)
         change_button = tkinter.Button(buttons_frame, text="Change", command=self.change_credentials_window)
         change_button.pack(side=tkinter.LEFT, expand=True)
+        test = tkinter.Button(buttons_frame, text="test", command=self.password_input)
+        test.pack(side=tkinter.LEFT, expand=True)
 
 
 

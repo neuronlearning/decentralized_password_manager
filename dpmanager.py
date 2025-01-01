@@ -9,9 +9,13 @@ import string
 class DPManager:
 
     temp_db = None
-    def __init__(self,db_name,db_encryption_key = ""):
+    def __init__(self,db_name=""):
+        if db_name:
+            self.db_name = db_name
+        self.db_encryption_key = None
+
+    def set_db_name(self,db_name):
         self.db_name = db_name
-        self.db_encryption_key = self.set_encryption_key(password=db_encryption_key)
 
     def encrypt(self,text:bytes,password:bytes):
         password = hashlib.sha256(password).digest()
@@ -26,16 +30,9 @@ class DPManager:
         decrypted = cipher.decrypt_and_verify(ciphertext=text[15:-16],received_mac_tag=text[-16:])
         return decrypted
 
-    def set_encryption_key(self,length = 16,password = ""):
+    def set_encryption_key(self,password = ""):
         if password:
-            return password.encode()
-        alphabet = list(string.ascii_letters + string.digits + string.punctuation)
-        for i in range(10):
-            random.shuffle(alphabet)
-
-        password = "".join(alphabet[:length])
-        open("database_key.txt","w").write(password)
-        return password.encode()
+            self.db_encryption_key = password.encode()
 
     def create_database(self,):
         database = sqlite3.connect(f"{self.db_name}.db")
