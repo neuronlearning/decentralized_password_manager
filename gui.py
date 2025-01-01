@@ -175,10 +175,6 @@ class app:
         delete_button.pack(side=tkinter.LEFT, expand=True)
         change_button = tkinter.Button(buttons_frame, text="Change", command=self.change_credentials_window)
         change_button.pack(side=tkinter.LEFT, expand=True)
-        test = tkinter.Button(buttons_frame, text="test", command=self.password_input)
-        test.pack(side=tkinter.LEFT, expand=True)
-
-
 
 gui = app()
 
