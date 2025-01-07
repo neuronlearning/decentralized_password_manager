@@ -8,13 +8,35 @@ import os
 class app:
 
     def __init__(self):
-
         self.root = tkinter.Tk()
         self.settings()
         self.root.geometry("800x600")
         self.root.title("Password Manager")
         self.root.config(bg="#3e4142")
         self.root.mainloop()
+
+
+    def password_check(self,password,exists,database_name = ""):
+        if exists:
+            self.database.set_encryption_key(password)
+            try:
+                self.database.load_database()
+                self.widgets()
+            except ValueError:
+                messagebox.showerror("Error", "Wrong password")
+        else:
+            try:
+                self.database.set_db_name(database_name),
+                self.database.set_encryption_key(password),
+                self.database.create_database(),
+                self.database.load_database(),
+                open("dpm_settings.json", "w").write(json.dumps({
+                    "database": f"{database_name}.db",
+                    "database_name": f"{database_name}"
+                })),
+                self.widgets()
+            except ValueError:
+                messagebox.showerror("Error", "Wrong password")
 
 
     def password_input(self,exists):
@@ -30,25 +52,14 @@ class app:
         password_input = tkinter.Entry(pass_w,font=30,show="*")
         password_input.grid(row=0,columnspan=2,column=1)
         if exists:
-            ok_button = tkinter.Button(pass_w,text="Enter",font=20,command=lambda : (self.database.set_encryption_key(password=password_input.get()),
-                                                                                     self.database.load_database(),
-                                                                                     self.widgets()))
+            ok_button = tkinter.Button(pass_w,text="Enter",font=20,command=lambda : self.password_check(password_input.get(),True))
             ok_button.grid(row=1,columnspan=2,column=1,pady=5)
         else:
             database_label = tkinter.Label(pass_w, text="Database name:", font=30)
             database_label.grid(row=1, column=0)
             database_input = tkinter.Entry(pass_w, font=30)
             database_input.grid(row=1, columnspan=2, column=1)
-            ok_button = tkinter.Button(pass_w, text="Enter", font=20, command=lambda: (self.database.set_db_name(database_input.get()),
-            self.database.set_encryption_key(password=password_input.get()),
-            self.database.create_database(),
-            self.database.load_database(),
-            open("dpm_settings.json", "w").write(json.dumps({
-        "database": f"{database_input.get()}.db",
-        "database_name": f"{database_input.get()}"
-    })),
-            self.widgets()))
-            # this is literally the biggest clusterfuck i have ever written its so fucking terrible holy shit
+            ok_button = tkinter.Button(pass_w, text="Enter", font=20, command=lambda: self.password_check(password_input.get(),False,database_input.get()))
             ok_button.grid(row=2, columnspan=2, column=1, pady=5)
 
 
