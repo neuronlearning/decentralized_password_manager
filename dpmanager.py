@@ -27,8 +27,12 @@ class DPManager:
     def decrypt(self,text:bytes,password:bytes):
         password = hashlib.sha256(password).digest()
         cipher = AES.new(key=password,mode=AES.MODE_GCM,nonce=text[:15])
-        decrypted = cipher.decrypt_and_verify(ciphertext=text[15:-16],received_mac_tag=text[-16:])
-        return decrypted
+        try:
+            decrypted = cipher.decrypt_and_verify(ciphertext=text[15:-16],received_mac_tag=text[-16:])
+        except ValueError:
+            raise ValueError("Wrong password")
+        else:
+            return decrypted
 
     def set_encryption_key(self,password = ""):
         if password:

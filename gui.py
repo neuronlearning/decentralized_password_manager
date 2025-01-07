@@ -124,7 +124,8 @@ class app:
         if function_db == "refresh":
             credentials = self.database.list_all_credentials()
         elif function_db == "search":
-            credentials = self.database.search_through_credentials(additional[0])
+            credentials = self.database.search_through_credentials(additional)
+
         elif function_db == "delete":
             try:
                 self.database.remove_credentials_by_id(additional[0])
