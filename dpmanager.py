@@ -39,7 +39,7 @@ class DPManager:
             self.db_encryption_key = password.encode()
 
     def create_database(self,):
-        database = sqlite3.connect(f"{self.db_name}.db")
+        database = sqlite3.connect(f"{self.db_name}")
         cursor = database.cursor()
         try:
             cursor.execute("CREATE TABLE credentials (id int,url varchar(512), username varchar(655), password MEDIUMTEXT, date_created varchar(64), date_updated varchar(64))")
@@ -51,10 +51,11 @@ class DPManager:
 
 
     def load_database(self):
-        if not os.path.isfile(f"{self.db_name}.db"):
+
+        if not os.path.isfile(f"{self.db_name}"):
             raise FileNotFoundError("Database file cannot be found")
 
-        with open(f"{self.db_name}.db","rb") as file:
+        with open(f"{self.db_name}","rb") as file:
             database = self.decrypt(file.read(),self.db_encryption_key)
 
         with open(f"temp_db_file_{self.db_name}.temp", "wb") as file:
@@ -78,7 +79,7 @@ class DPManager:
 
         temp_new.close() # closes the temp database
 
-        with open(f"{self.db_name}.db", "wb") as file:
+        with open(f"{self.db_name}", "wb") as file:
             with open(f"temp_db_file_{self.db_name}.temp","rb") as file2:
                 file.write(self.encrypt(file2.read(),self.db_encryption_key)) # reads the temp database file (current database in the memory) and encrypts it and overwrites the original database
                 file2.close()
@@ -87,10 +88,10 @@ class DPManager:
 
 
     def encrypt_database(self,key:bytes):
-        with open(f"{self.db_name}.db","rb") as file:
+        with open(f"{self.db_name}","rb") as file:
             unencrypted = file.read()
         encrypted_database = self.encrypt(unencrypted,key)
-        with open(f"{self.db_name}.db","wb") as file:
+        with open(f"{self.db_name}","wb") as file:
             file.write(encrypted_database)
 
     def list_all_credentials(self):

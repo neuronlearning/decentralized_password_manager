@@ -74,13 +74,28 @@ class app:
             with open("dpm_settings.json", "r") as file:
                 setting = file.read()
                 setting = json.loads(setting)
-                self.database = DPManager(setting["database_name"])
+                self.database = DPManager(setting["database"])
                 self.password_input(exists=True)
 
         except FileNotFoundError:
-            messagebox.showinfo("Warning", "The database file was not found. Creating new one.")
-            self.database = DPManager()
-            self.password_input(exists=False)
+            not_found = messagebox.askyesno("Warning", "The database file was not found. Do you have an already existing one?")
+            if not_found:
+                database_path = filedialog.askopenfilename(title="Choose database file")
+
+                with open(database_path, "rb") as file:
+                    dat = file.read()
+                    with open(os.path.basename(database_path), "wb") as file2:
+                        file2.write(dat)
+                    open("dpm_settings.json", "w").write(json.dumps({
+                        "database" : os.path.basename(database_path),
+                        "database_name": os.path.basename(database_path)[:-3]
+                    })),
+
+                self.database = DPManager(os.path.basename(database_path))
+                self.password_input(exists=True)
+            else:
+                self.database = DPManager()
+                self.password_input(exists=False)
 
 
     def add_credentials_window(self):
@@ -122,7 +137,6 @@ class app:
         button.grid(row=4, columnspan=3, column=0)
 
     def refresh_listview(self,function_db,additional = []):
-
         if function_db == "refresh":
             credentials = self.database.list_all_credentials()
         elif function_db == "search":
