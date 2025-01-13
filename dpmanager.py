@@ -8,11 +8,11 @@ import string
 
 class DPManager:
 
-    temp_db = None
     def __init__(self,db_name=""):
         if db_name:
             self.db_name = db_name
         self.db_encryption_key = None
+        self.temp_db = None
 
     def set_db_name(self,db_name):
         self.db_name = db_name
