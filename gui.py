@@ -16,12 +16,13 @@ class app:
         self.root.mainloop()
 
 
-    def password_check(self,password,exists,database_name = ""):
+    def password_check(self,window_object,password,exists,database_name = ""):
         if exists:
             self.database.set_encryption_key(password)
             try:
                 self.database.load_database()
                 self.widgets()
+                window_object.destroy()
             except ValueError:
                 messagebox.showerror("Error", "Wrong password")
         else:
@@ -35,6 +36,7 @@ class app:
                     "database_name": f"{database_name}"
                 })),
                 self.widgets()
+                window_object.destroy()
             except ValueError:
                 messagebox.showerror("Error", "Wrong password")
 
@@ -52,14 +54,14 @@ class app:
         password_input = tkinter.Entry(pass_w,font=30,show="*")
         password_input.grid(row=0,columnspan=2,column=1)
         if exists:
-            ok_button = tkinter.Button(pass_w,text="Enter",font=20,command=lambda : self.password_check(password_input.get(),True))
+            ok_button = tkinter.Button(pass_w,text="Enter",font=20,command=lambda : self.password_check(pass_w,password_input.get(),True))
             ok_button.grid(row=1,columnspan=2,column=1,pady=5)
         else:
             database_label = tkinter.Label(pass_w, text="Database name:", font=30)
             database_label.grid(row=1, column=0)
             database_input = tkinter.Entry(pass_w, font=30)
             database_input.grid(row=1, columnspan=2, column=1)
-            ok_button = tkinter.Button(pass_w, text="Enter", font=20, command=lambda: self.password_check(password_input.get(),False,database_input.get()))
+            ok_button = tkinter.Button(pass_w, text="Enter", font=20, command=lambda: self.password_check(pass_w,password_input.get(),False,database_input.get()))
             ok_button.grid(row=2, columnspan=2, column=1, pady=5)
 
 
@@ -125,7 +127,6 @@ class app:
             credentials = self.database.list_all_credentials()
         elif function_db == "search":
             credentials = self.database.search_through_credentials(additional)
-
         elif function_db == "delete":
             try:
                 self.database.remove_credentials_by_id(additional[0])

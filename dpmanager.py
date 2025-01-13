@@ -52,7 +52,8 @@ class DPManager:
 
     def load_database(self):
         if not os.path.isfile(f"{self.db_name}.db"):
-            return None
+            raise FileNotFoundError("Database file cannot be found")
+
         with open(f"{self.db_name}.db","rb") as file:
             database = self.decrypt(file.read(),self.db_encryption_key)
 
@@ -71,12 +72,15 @@ class DPManager:
         os.remove(f"temp_db_file_{self.db_name}.temp")
 
     def write_to_database(self):
-        temp_new = sqlite3.connect(f"temp_db_file_{self.db_name}.temp")
-        self.temp_db.backup(temp_new)
-        temp_new.close()
+        temp_new = sqlite3.connect(f"temp_db_file_{self.db_name}.temp") # Creates a temporary file where the database from memory is going to be stored
+
+        self.temp_db.backup(temp_new) # stores the database in memory into the file
+
+        temp_new.close() # closes the temp database
+
         with open(f"{self.db_name}.db", "wb") as file:
             with open(f"temp_db_file_{self.db_name}.temp","rb") as file2:
-                file.write(self.encrypt(file2.read(),self.db_encryption_key))
+                file.write(self.encrypt(file2.read(),self.db_encryption_key)) # reads the temp database file (current database in the memory) and encrypts it and overwrites the original database
                 file2.close()
         self.temp_db.close()
         self.delete_temp_file()
