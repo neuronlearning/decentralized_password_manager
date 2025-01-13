@@ -147,6 +147,7 @@ class DPManager:
                            f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"')
         database.commit()
         self.write_to_database() #thanks python for not allowing me to use wrapper for this
+        self.load_database()
 
     def update_credentials_by_id(self,id:int,new_username:str,new_password:str):
         database = self.temp_db
@@ -164,6 +165,7 @@ class DPManager:
                            f'WHERE credentials.id = {id}')
         database.commit()
         self.write_to_database() #thanks python for not allowing me to use wrapper for this
+        self.load_database()
 
     def add_credentials(self,url:str,username:str,password:str):
         database = self.temp_db
@@ -173,6 +175,7 @@ class DPManager:
             cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
             database.commit()
             self.write_to_database() #thanks python for not allowing me to use wrapper for this
+            self.load_database()
 
     def remove_credentials_by_id(self,id:int):
         database = self.temp_db
@@ -181,6 +184,8 @@ class DPManager:
         cursor.execute(f"DELETE FROM credentials WHERE credentials.id = {id}")
         database.commit()
         self.write_to_database() #thanks python for not allowing me to use wrapper for this
+        self.load_database()
+
 '''
 database = DPManager("default_user","test")
 database.load_database()

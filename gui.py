@@ -122,7 +122,7 @@ class app:
         button.grid(row=4, columnspan=3, column=0)
 
     def refresh_listview(self,function_db,additional = []):
-        self.database.load_database()
+
         if function_db == "refresh":
             credentials = self.database.list_all_credentials()
         elif function_db == "search":
@@ -130,18 +130,15 @@ class app:
         elif function_db == "delete":
             try:
                 self.database.remove_credentials_by_id(additional[0])
-                self.database.load_database()
                 credentials = self.database.list_all_credentials()
             except IndexError:
                 messagebox.showwarning("Warning", "You must first select the credential before removing it.")
                 credentials = self.database.list_all_credentials()
         elif function_db == "add":
             self.database.add_credentials(additional[0],additional[1],additional[2])
-            self.database.load_database()
             credentials = self.database.list_all_credentials()
         elif function_db == "change":
             self.database.update_credentials_by_id(additional[0],additional[1],additional[2])
-            self.database.load_database()
             credentials = self.database.list_all_credentials()
 
         for item in self.tree.get_children():
