@@ -3,7 +3,6 @@ import random
 import hashlib
 import sqlite3
 import os
-import datetime
 
 class DPManager:
 
@@ -135,16 +134,15 @@ class DPManager:
     def update_credentials_by_name_and_password(self,url:str,username:str,password:str,new_username:str,new_password:str):
         database = self.__temp_db
         cursor = database.cursor()
-        current_date = datetime.datetime.now()
         if new_password and new_username:
             cursor.execute(
-                f'UPDATE credentials SET username = "{new_username}", password = "{new_password}", date_updated = "{current_date}" '
+                f'UPDATE credentials SET username = "{new_username}", password = "{new_password}", date_updated = unixepoch() '
                 f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"')
         elif new_password:
-            cursor.execute(f'UPDATE credentials SET password = "{new_password}",date_updated = "{current_date}" '
+            cursor.execute(f'UPDATE credentials SET password = "{new_password}",date_updated = unixepoch()'
                            f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"')
         elif new_username:
-            cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = "{current_date}" '
+            cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = unixepoch() '
                            f'WHERE credentials.url = "{url}" AND credentials.username = "{username}" AND credentials.password = "{password}"')
         database.commit()
         self.write_to_database() #thanks python for not allowing me to use wrapper for this
@@ -153,16 +151,16 @@ class DPManager:
     def update_credentials_by_id(self,id:int,new_username:str,new_password:str):
         database = self.__temp_db
         cursor = database.cursor()
-        current_date = datetime.datetime.now()
+
         if new_password and new_username:
             cursor.execute(
-                f'UPDATE credentials SET username = "{new_username}", password = "{new_password}", date_updated = "{current_date}" '
+                f'UPDATE credentials SET username = "{new_username}", password = "{new_password}", date_updated = unixepoch() '
                 f'WHERE credentials.id = {id}')
         elif new_password:
-            cursor.execute(f'UPDATE credentials SET password = "{new_password}",date_updated = "{current_date}" '
+            cursor.execute(f'UPDATE credentials SET password = "{new_password}",date_updated = unixepoch() '
                            f'WHERE credentials.id = {id}')
         elif new_username:
-            cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = "{current_date}" '
+            cursor.execute(f'UPDATE credentials SET username = "{new_username}",date_updated = unixepoch() '
                            f'WHERE credentials.id = {id}')
         database.commit()
         self.write_to_database() #thanks python for not allowing me to use wrapper for this
@@ -171,9 +169,8 @@ class DPManager:
     def add_credentials(self,url:str,username:str,password:str):
         database = self.__temp_db
         cursor = database.cursor()
-        current_date = datetime.datetime.now()
         if url and username and password:
-            cursor.execute(f'INSERT INTO credentials(url,username,password,date_created,date_updated) VALUES ("{url}","{username}","{password}","{current_date}","{current_date}")')
+            cursor.execute(f'INSERT INTO credentials(url,username,password,date_created,date_updated) VALUES ("{url}","{username}","{password}",unixepoch(),unixepoch())')
             database.commit()
             self.write_to_database() #thanks python for not allowing me to use wrapper for this
             self.load_database()

@@ -137,22 +137,23 @@ class App:
             id = self.tree.item(self.tree.focus())["values"][0], username = username.get(), password = password.get()), root.destroy()))
         button.grid(row=4, columnspan=3, column=0)
 
-    def refresh_listview(self, function_db, id = 0,url:str = "",username:str = "",password:str = "",query:str = ""):
-        if function_db == "refresh":
+    def refresh_listview(self, query, id = 0, url:str = "", username:str = "", password:str = ""):
+        if query == "refresh":
             credentials = self.database.list_all_credentials()
-        elif function_db == "search":
+            print(credentials)
+        elif query == "search":
             credentials = self.database.search_through_credentials(query)
-        elif function_db == "delete":
+        elif query == "delete":
             try:
                 self.database.remove_credentials_by_id(id)
                 credentials = self.database.list_all_credentials()
             except IndexError:
                 messagebox.showwarning("Warning", "You must first select the credential before removing it.")
                 credentials = self.database.list_all_credentials()
-        elif function_db == "add":
+        elif query == "add":
             self.database.add_credentials(url, username, password)
             credentials = self.database.list_all_credentials()
-        elif function_db == "change":
+        elif query == "change":
             self.database.update_credentials_by_id(id, username, password)
             credentials = self.database.list_all_credentials()
 
@@ -169,7 +170,7 @@ class App:
         search_frame.pack(side=tkinter.TOP, fill=tkinter.X)
         searchbar_text = tkinter.StringVar()
         search_button = tkinter.Button(search_frame, text="Search", font=36, bg="green", borderwidth=-1, fg="white",
-                                       command=lambda: self.refresh_listview("search", searchbar_text.get()))
+                                       command=lambda: self.refresh_listview("search", query=searchbar_text.get()))
         search_button.pack(side=tkinter.RIGHT)
         searchbar = tkinter.Entry(search_frame, bg="#2C3136", font=36, fg="white", borderwidth=-1,
                                   textvariable=searchbar_text,
