@@ -11,11 +11,16 @@ class DPManager:
         self.__db_encryption_key = None
         self.__temp_db = None
 
-    def set_db_name(self,db_name):
+    def __set_db_path(self,db_name):
         if db_name == "":
             raise Exception("The database name is empty")
         else:
-            self.db_name = db_name
+            self.__db_name = db_name
+
+    def __get_db_path(self):
+        return self.__db_name
+
+    db_name = property(__get_db_path,__set_db_path)
 
     def encrypt(self,text:bytes,password:bytes):
         password = hashlib.sha256(password).digest()
@@ -38,11 +43,11 @@ class DPManager:
         if password:
             self.__db_encryption_key = password.encode()
 
-    def create_database(self,):
-        database = sqlite3.connect(f"{self.db_name}")
+    def create_database(self):
+        database = sqlite3.connect(self.db_name)
         cursor = database.cursor()
         try:
-            cursor.execute("CREATE TABLE credentials (id int auto increment primary key,url varchar(512), username varchar(655), password MEDIUMTEXT, date_created varchar(64), date_updated varchar(64))")
+            cursor.execute("CREATE TABLE credentials (id INTEGER PRIMARY KEY AUTOINCREMENT,url varchar(512), username varchar(655), password MEDIUMTEXT, date_created varchar(64), date_updated varchar(64))")
             database.commit()
             self.encrypt_database(self.__db_encryption_key)
         except sqlite3.OperationalError as e:
@@ -50,7 +55,7 @@ class DPManager:
 
 
     def load_database(self):
-        if not os.path.isfile(f"{self.db_name}"):
+        if not os.path.isfile(self.db_name):
             raise FileNotFoundError("Database file cannot be found")
 
         with open(f"{self.db_name}","rb") as file:
@@ -99,7 +104,6 @@ class DPManager:
         cursor.execute(f'SELECT id,url,username,password FROM credentials')
 
         credentials = cursor.fetchall()
-
 
         return credentials
 
@@ -169,7 +173,7 @@ class DPManager:
         cursor = database.cursor()
         current_date = datetime.datetime.now()
         if url and username and password:
-            cursor.execute(f'INSERT INTO credentials VALUES ((select count(*) from credentials)+1,"{url}","{username}","{password}","{current_date}","{current_date}")')
+            cursor.execute(f'INSERT INTO credentials(url,username,password,date_created,date_updated) VALUES ("{url}","{username}","{password}","{current_date}","{current_date}")')
             database.commit()
             self.write_to_database() #thanks python for not allowing me to use wrapper for this
             self.load_database()

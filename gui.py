@@ -6,7 +6,7 @@ import threading
 import os
 
 
-class app:
+class App:
 
     def __init__(self):
         self.root = tkinter.Tk()
@@ -16,7 +16,8 @@ class app:
         self.root.config(bg="#3e4142")
         self.root.mainloop()
 
-    def password_check(self, window_object, password, exists, database_name):
+    def password_check(self, window_object, password, exists, database_name = ""):
+
         if exists:
             self.database.set_encryption_key(password)
             try:
@@ -27,13 +28,12 @@ class app:
                 messagebox.showerror("Error", "Wrong password")
         else:
             try:
-                self.database.set_db_name(database_name),
-                self.database.set_encryption_key(password),
-                self.database.create_database(),
-                self.database.load_database(),
+                self.database.db_name = database_name+".db"
+                self.database.set_encryption_key(password)
+                self.database.create_database()
+                self.database.load_database()
                 open("dpm_settings.json", "w").write(json.dumps({
-                    "database": f"{database_name}.db",
-                    "database_name": f"{database_name}"
+                    "database": f"{database_name}.db"
                 })),
                 self.widgets()
                 window_object.destroy()
@@ -60,15 +60,12 @@ class app:
             database_label.grid(row=1, column=0)
             database_input = tkinter.Entry(pass_w, font=30)
             database_input.grid(row=1, columnspan=2, column=1)
-            ok_button = tkinter.Button(pass_w, text="Enter", font=20,
-                                       command=lambda: self.password_check(pass_w, password_input.get(), False,
-                                                                           database_input.get()))
+            ok_button = tkinter.Button(pass_w, text="Enter", font=20, command=lambda: self.password_check(pass_w,password_input.get(),False,database_input.get()))
             ok_button.grid(row=2, columnspan=2, column=1, pady=5)
 
     def settings(self):
         json_settings = {  # more are on the way tm
-            "database": "default_user.db",
-            "database_name": "default_user"
+            "database": "default_user.db"
         }
 
         try:
@@ -76,25 +73,25 @@ class app:
                 setting = file.read()
                 setting = json.loads(setting)
                 self.database = DPManager()
-                self.database.set_db_name(setting["database"])
+                self.database.db_name = setting["database"]
                 self.password_input(exists=True)
 
         except FileNotFoundError:
-            not_found = messagebox.askyesno("Warning",
+            found = messagebox.askyesno("Warning",
                                             "The database file was not found. Do you have an already existing one?")
-            if not_found:
+            if found:
                 database_path = filedialog.askopenfilename(title="Choose database file")
 
-                with open(database_path, "rb") as file:
+                with open(os.path.basename(database_path), "rb") as file:
                     dat = file.read()
                     with open(os.path.basename(database_path), "wb") as file2:
                         file2.write(dat)
                     open("dpm_settings.json", "w").write(json.dumps({
-                        "database": os.path.basename(database_path),
-                        "database_name": os.path.basename(database_path)[:-3]
+                        "database": os.path.basename(database_path)
                     })),
 
-                self.database = DPManager(os.path.basename(database_path))
+                self.database = DPManager()
+                self.database.db_name = os.path.basename(database_path)
                 self.password_input(exists=True)
             else:
                 self.database = DPManager()
@@ -119,7 +116,7 @@ class app:
         password.grid(row=3, column=1)
 
         button = tkinter.Button(root, text="OK", command=lambda: (
-        self.refresh_listview("add", [url.get(), username.get(), password.get()]), root.destroy()))
+        self.refresh_listview("add", url=url.get(), username=username.get(), password=password.get()),root.destroy()))
         button.grid(row=4, columnspan=3, column=0)
 
     def change_credentials_window(self):
@@ -136,27 +133,27 @@ class app:
         tkinter.Label(root, font=30, text="Password: ").grid(row=3, column=0)
         password.grid(row=3, column=1)
 
-        button = tkinter.Button(root, text="OK", command=lambda: (self.refresh_listview("change", [
-            self.tree.item(self.tree.focus())["values"][0], username.get(), password.get()]), root.destroy()))
+        button = tkinter.Button(root, text="OK", command=lambda: (self.refresh_listview("change",
+            id = self.tree.item(self.tree.focus())["values"][0], username = username.get(), password = password.get()), root.destroy()))
         button.grid(row=4, columnspan=3, column=0)
 
-    def refresh_listview(self, function_db, additional=[]):
+    def refresh_listview(self, function_db, id = 0,url:str = "",username:str = "",password:str = "",query:str = ""):
         if function_db == "refresh":
             credentials = self.database.list_all_credentials()
         elif function_db == "search":
-            credentials = self.database.search_through_credentials(additional)
+            credentials = self.database.search_through_credentials(query)
         elif function_db == "delete":
             try:
-                self.database.remove_credentials_by_id(additional[0])
+                self.database.remove_credentials_by_id(id)
                 credentials = self.database.list_all_credentials()
             except IndexError:
                 messagebox.showwarning("Warning", "You must first select the credential before removing it.")
                 credentials = self.database.list_all_credentials()
         elif function_db == "add":
-            self.database.add_credentials(additional[0], additional[1], additional[2])
+            self.database.add_credentials(url, username, password)
             credentials = self.database.list_all_credentials()
         elif function_db == "change":
-            self.database.update_credentials_by_id(additional[0], additional[1], additional[2])
+            self.database.update_credentials_by_id(id, username, password)
             credentials = self.database.list_all_credentials()
 
         for item in self.tree.get_children():
@@ -204,12 +201,12 @@ class app:
         delete_button = tkinter.Button(buttons_frame, text="Delete", command=lambda: self.refresh_listview("delete",
                                                                                                            self.tree.item(
                                                                                                                self.tree.focus())[
-                                                                                                               "values"]))
+                                                                                                               "values"][0]))
         delete_button.pack(side=tkinter.LEFT, expand=True)
         change_button = tkinter.Button(buttons_frame, text="Change", command=self.change_credentials_window)
         change_button.pack(side=tkinter.LEFT, expand=True)
 
 
-gui = app()
+gui = App()
 
 
