@@ -4,18 +4,18 @@ import hashlib
 import sqlite3
 import os
 import datetime
-import string
 
 class DPManager:
 
-    def __init__(self,db_name=""):
-        if db_name:
-            self.db_name = db_name
-        self.db_encryption_key = None
-        self.temp_db = None
+    def __init__(self):
+        self.__db_encryption_key = None
+        self.__temp_db = None
 
     def set_db_name(self,db_name):
-        self.db_name = db_name
+        if db_name == "":
+            raise Exception("The database name is empty")
+        else:
+            self.db_name = db_name
 
     def encrypt(self,text:bytes,password:bytes):
         password = hashlib.sha256(password).digest()
@@ -34,29 +34,27 @@ class DPManager:
         else:
             return decrypted
 
-    def set_encryption_key(self,password = ""):
+    def set_encryption_key(self,password):
         if password:
-            self.db_encryption_key = password.encode()
+            self.__db_encryption_key = password.encode()
 
     def create_database(self,):
         database = sqlite3.connect(f"{self.db_name}")
         cursor = database.cursor()
         try:
-            cursor.execute("CREATE TABLE credentials (id int,url varchar(512), username varchar(655), password MEDIUMTEXT, date_created varchar(64), date_updated varchar(64))")
+            cursor.execute("CREATE TABLE credentials (id int auto increment primary key,url varchar(512), username varchar(655), password MEDIUMTEXT, date_created varchar(64), date_updated varchar(64))")
             database.commit()
-            self.encrypt_database(self.db_encryption_key)
-            return 1
-        except sqlite3.OperationalError:
-            pass
+            self.encrypt_database(self.__db_encryption_key)
+        except sqlite3.OperationalError as e:
+            raise sqlite3.OperationalError(e)
 
 
     def load_database(self):
-
         if not os.path.isfile(f"{self.db_name}"):
             raise FileNotFoundError("Database file cannot be found")
 
         with open(f"{self.db_name}","rb") as file:
-            database = self.decrypt(file.read(),self.db_encryption_key)
+            database = self.decrypt(file.read(), self.__db_encryption_key)
 
         with open(f"temp_db_file_{self.db_name}.temp", "wb") as file:
             file.write(database)
@@ -65,7 +63,7 @@ class DPManager:
         database_d = sqlite3.connect(f"temp_db_file_{self.db_name}.temp")
         database_m = sqlite3.connect(":memory:")
         database_d.backup(database_m)
-        self.temp_db = database_m
+        self.__temp_db = database_m
         database_d.close()
         self.delete_temp_file()
 
@@ -75,15 +73,15 @@ class DPManager:
     def write_to_database(self):
         temp_new = sqlite3.connect(f"temp_db_file_{self.db_name}.temp") # Creates a temporary file where the database from memory is going to be stored
 
-        self.temp_db.backup(temp_new) # stores the database in memory into the file
+        self.__temp_db.backup(temp_new) # stores the database in memory into the file
 
         temp_new.close() # closes the temp database
 
         with open(f"{self.db_name}", "wb") as file:
             with open(f"temp_db_file_{self.db_name}.temp","rb") as file2:
-                file.write(self.encrypt(file2.read(),self.db_encryption_key)) # reads the temp database file (current database in the memory) and encrypts it and overwrites the original database
+                file.write(self.encrypt(file2.read(), self.__db_encryption_key)) # reads the temp database file (current database in the memory) and encrypts it and overwrites the original database
                 file2.close()
-        self.temp_db.close()
+        self.__temp_db.close()
         self.delete_temp_file()
 
 
@@ -95,33 +93,31 @@ class DPManager:
             file.write(encrypted_database)
 
     def list_all_credentials(self):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
 
         cursor.execute(f'SELECT id,url,username,password FROM credentials')
 
         credentials = cursor.fetchall()
 
-         #for item in credentials:
-          #  print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
+
         return credentials
 
 
     def search_through_credentials(self,query:str):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
 
         cursor.execute(f'SELECT id,url,username,password FROM credentials WHERE credentials.url LIKE "%{query}%" OR credentials.username LIKE "%{query}%" OR credentials.password LIKE "%{query}%"')
 
         credentials = cursor.fetchall()
 
-        #for item in credentials:
-         #   print(f"ID: {item[0]}\nURL: {item[1]}\nUsername: {item[2]}\nPassword: {item[3]}\n{"-" * 30}")
+
         return credentials
 
 
     def check_if_credentials_exist(self, url: str, username: str, password: str):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
 
         if cursor.execute(f'SELECT id,url,username,password '
@@ -133,7 +129,7 @@ class DPManager:
             return None
 
     def update_credentials_by_name_and_password(self,url:str,username:str,password:str,new_username:str,new_password:str):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
         current_date = datetime.datetime.now()
         if new_password and new_username:
@@ -151,7 +147,7 @@ class DPManager:
         self.load_database()
 
     def update_credentials_by_id(self,id:int,new_username:str,new_password:str):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
         current_date = datetime.datetime.now()
         if new_password and new_username:
@@ -169,7 +165,7 @@ class DPManager:
         self.load_database()
 
     def add_credentials(self,url:str,username:str,password:str):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
         current_date = datetime.datetime.now()
         if url and username and password:
@@ -179,7 +175,7 @@ class DPManager:
             self.load_database()
 
     def remove_credentials_by_id(self,id:int):
-        database = self.temp_db
+        database = self.__temp_db
         cursor = database.cursor()
 
         cursor.execute(f"DELETE FROM credentials WHERE credentials.id = {id}")
